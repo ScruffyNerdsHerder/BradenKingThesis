@@ -1,4 +1,4 @@
-module AltSolvers
+
 using SLFA
 using Optim
 using LsqFit
@@ -6,7 +6,7 @@ using LinearAlgebra
 export lsq_TV_solver_LBFGS, lsq_TV_solver_CG, lsq_TV_solver_GradientDescent
 
 function lsq_TV_solver_CG(omega_TV, theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction})
-    res_new(theta) = res - theta[end-1] .* [eval_phi(X[i,:], theta, T_phi) for i in axes(X,1)] .- theta[end]
+    res_new(theta) = res - theta[end-1] .* eval_phi(X, theta, T_phi) .- theta[end]
 
     if omega_TV > 0.0
         f_lsq_orig = norm(res_new(theta0))
@@ -48,7 +48,7 @@ function lsq_TV_solver_CG(omega_TV, theta0, X, res, A, D, N, T_phi::Type{<:Basis
 
 end
 function lsq_TV_solver_LBFGS(omega_TV, theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction})
-    res_new(theta) = res - theta[end-1] .* [eval_phi(X[i,:], theta, T_phi) for i in axes(X,1)] .- theta[end]
+    res_new(theta) = res - theta[end-1] .* eval_phi(X, theta, T_phi) .- theta[end]
 
     if omega_TV > 0.0
         f_lsq_orig = norm(res_new(theta0))
@@ -90,7 +90,7 @@ function lsq_TV_solver_LBFGS(omega_TV, theta0, X, res, A, D, N, T_phi::Type{<:Ba
 
 end
 function lsq_TV_solver_GradientDescent(omega_TV, theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction})
-    res_new(theta) = res - theta[end-1] .* [eval_phi(X[i,:], theta, T_phi) for i in axes(X,1)] .- theta[end]
+    res_new(theta) = res - theta[end-1] .* eval_phi(X, theta, T_phi) .- theta[end]
 
     if omega_TV > 0.0
         f_lsq_orig = norm(res_new(theta0))
@@ -130,5 +130,4 @@ function lsq_TV_solver_GradientDescent(omega_TV, theta0, X, res, A, D, N, T_phi:
         return theta
     end
 
-end
 end

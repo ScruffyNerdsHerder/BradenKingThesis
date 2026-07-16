@@ -1,11 +1,9 @@
 # Set of 1D benchmarks that can be chosen from 
-module Benchmarks
-
 using LinearAlgebra
 using Measures
 using Random
 using Optim
-export Benchmark_1D
+export Benchmark_1D, Benchmark_2D
 
 function Benchmark_1D(X,benchmark,noiseLevel=0.0)
     if benchmark == "AsymmetricRBF"
@@ -52,4 +50,29 @@ function Benchmark_1D(X,benchmark,noiseLevel=0.0)
     return y_noisy
 end
 
-end # Module Benchmarks
+    function Benchmark_2D(X,benchmark,noiseLevel=0.0)
+        if benchmark == "Sine"
+            y = 2 .* sin.(2pi .* X) .+ 1
+        elseif benchmark == "Step"
+            periods = .25*(X[end]-X[1])
+            y = zero(X)
+            y[mod.(X,periods) .<= 1] .= 1
+        elseif benchmark == "SinE"
+            y = 0.8*exp.(-0.2*X) .* sin.(10*X)
+        elseif benchmark == "CompositeSine"
+            funcs = 30
+            rand_Params = Random.randn(Xoshiro(4414),4,funcs);
+            y = zero(X);
+            for i = 1:funcs
+                amplitude = rand_Params[1,i]
+                phase = rand_Params[2,i]
+                freq = rand_Params[3,i]
+                bias = rand_Params[4,i]
+                y .= y .+ amplitude .* sin.(1.5 .* pi .* freq .* X .+ phase) .+ bias;
+            end
+        else # Didnt put in a correct benchmark
+            throw("Put in a correct benchmark please: AsymnmetricRBF, Sine, Step, SinE, or CompositeSine")
+        end
+        rng = Xoshiro(23)
+        noise = 2 .* randn(rng,size(y))
+end
