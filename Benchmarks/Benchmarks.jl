@@ -18,8 +18,6 @@ function Benchmark_1D(X,benchmark,noiseLevel=0.0)
         a2 = a1
         b2 = b1
         y = similar(X)
-
-        # build new y
         y[X.<= c1] .= a1 .* exp.(-((X[X .<= c1] .- c1) .* w1).^2) .+ b1
         y[X .>  c1] .= a2 .* exp.(-((X[X .>  c1] .- c1) .* w2).^2) .+ b2
     elseif benchmark == "Sine"
@@ -54,7 +52,11 @@ function Benchmark_2D(X, benchmark, noiseLevel=0.0)
     X1 = X[1,:]
     X2 = X[2,:]
     if benchmark == "Sine"
+        y = sin.(pi.*X1).*sin.(pi.*X2)
+        println("Sine")
+    elseif benchmark == "FineSine"
         y = sin.(2*pi.*X1).*sin.(2*pi.*X2)
+        println("Finesine")
     elseif benchmark == "Step"
         index = 1
         y = zero(X1)
@@ -65,7 +67,7 @@ function Benchmark_2D(X, benchmark, noiseLevel=0.0)
             end
             index = index + 1 
         end
-    elseif benchmark == "SinE"
+    elseif benchmark == "SineE"
         y = zero(X1)
         index = 1
         for x1 in X1
@@ -77,6 +79,8 @@ function Benchmark_2D(X, benchmark, noiseLevel=0.0)
         y = -1 ./ 30 .* exp.(-1 .- 6 .* X1 .- 9 .* X1.^2 - 9 .* X2.^2) .+
         -(0.6 .* X1 .- 27 .* X1.^3 - 243 .* X2.^5).*exp.(-9 .* X1.^2 .- 9 .*X2.^2) .+
         (0.3 .- 1.8.*X1 .+ 2.7 .* X1.^2).*exp.(-1 .- 6 .* X2 .- 9 .* X1.^2 .- 9 .* X2 .^2)
+    elseif benchmark == "Spiral"
+
     else # Didnt put in a correct benchmark
         throw("Put in a correct benchmark please: Sine, Step, SinE, or Peaks")
     end
