@@ -259,15 +259,15 @@ end
 
 ## Run a benchmark
     # X, y, A, D = benchmark_2D_data("ExtraFiles/data/uniform_10000_doublecone_30deg.jld2", "Step", 0.0)
-    X, y, A, D = benchmark_2D_data("ExtraFiles/data/grid_100x100_doublecone_30deg.jld2", "Step", 0.0)
-    # X, y, A, D = benchmark_2D_data("ExtraFiles/data/yu_spiral_doublecone_30deg.jld2", "Spiral", 0.0)
+    # X, y, A, D = benchmark_2D_data("ExtraFiles/data/grid_100x100_doublecone_30deg.jld2", "FineSine", 0.0)
+    X, y, A, D = benchmark_2D_data("ExtraFiles/data/yu_spiral_doublecone_30deg.jld2", "Spiral", 0.0)
      omega = 0.0
     error_threshold = [0.0, 0.0, 0.0]
     print_iter=false
     noiseLevel = 0.00
     start_gap = 0 # start gap for the monotonicity constraint
     monotonicity=Nonstrict()
-    
+
     solver_LBFGS(theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction}) = lsq_TV_solver_LBFGS(omega, theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction})
 
     Theta_LBFGS, res_history_LBFGS, _, _, _, _, _ = train_RBFN(

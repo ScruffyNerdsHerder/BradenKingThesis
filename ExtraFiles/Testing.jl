@@ -12,10 +12,6 @@ using Measures
 using JLD2
 using PrettyTables
 
-## Create 2D benchmarks
-X, y, A, D = benchmark_2D_data("ExtraFiles/data/grid_100x100_doublecone_15deg.jld2","SinE",0.0)
-surface(X[1,:], X[2,:], y)
-
 
 ## Do the Time Benchmarking for the clean and noisy data
 omega = 0.0
