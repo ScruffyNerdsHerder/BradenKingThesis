@@ -295,51 +295,6 @@ end
     display(f)
 
     # There's a massive high spot inside the data if you shift even slightly off the input data. (1.00000001 .*X)
-
-## Run Omega Sweep on each 2D benchmark
-        X, y, A, D = benchmark_2D_data("ExtraFiles/data/uniform_1000_doublecone_30deg.jld2", "SineE", 0.0)
-        # X, y, A, D = benchmark_2D_data("ExtraFiles/data/yu_spiral_doublecone_30deg.jld2", "Spiral", 0.0)
-
-         monotonicity=Nonstrict()
-        omegas = collect(range(0.0, stop=5, length=200))
-        finalres = zeros(length(omegas))
-        finaltheta = zeros(length(omegas),500,5)
-        i=1
-        for omega in omegas
-            println(omega)
-            solver_LBFGS(theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction}) = lsq_TV_solver_LBFGS(omega, theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction})
-            error_threshold = [0.0, 0.0, 0.0]
-            print_iter=false
-            Theta, res_history, _, _, _, _, _ = train_RBFN(
-            X, y, A, D,
-            N_max=500,
-            solver=solver_LBFGS,
-            conv_thresholds=error_threshold,
-            print_iter=print_iter,
-            is_monotonic=monotonicity,
-            get_initial_guess = max_dist_test,
-            T_phi = Gaussian{Isotropic, Float64, 2}
-            );
-            finalres[i] = res_history[end]
-            finaltheta[i,:,:] = Theta
-            i=i+1
-        end
-        ## Plot the residuals vs omega
-        @save "SineEOmegaSweep.jdl2" omegas finalres finaltheta
-        
-        @load "SineEOmegaSweep.jdl2" finalres
-        f = CairoMakie.Figure()
-        ax = Axis(f[1,1],
-        yscale = log10,
-        xlabel = "Omega",
-        ylabel = "Final Residual Error",
-        title = "SineE Fine Omega Sweep")
-        CairoMakie.scatter!(ax,omegas, finalres)
-        f
-    ## 
-
-
-
 ## Generate and investigate support set on step function
 dx = 0.2
 X = [0:dx:6...]

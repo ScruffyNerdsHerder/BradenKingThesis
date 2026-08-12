@@ -3,7 +3,7 @@ using LinearAlgebra
 using Measures
 using Random
 using Optim
-export Benchmark_1D, Benchmark_2D
+export Benchmark_1D, Benchmark_2D, benchmark_2D_data
 
 function Benchmark_1D(X,benchmark,noiseLevel=0.0)
     if benchmark == "AsymmetricRBF"
@@ -88,4 +88,27 @@ function Benchmark_2D(X, benchmark, noiseLevel=0.0)
     noise = 2 .* randn(rng, size(y))
     y_noisy = noiseLevel .* noise .* y .+ y
     return y_noisy
+end
+
+function benchmark_2D_data(filename,benchmark,noiseLevel)
+    X = load(filename,"X")
+    A = load(filename,"A")
+    D = load(filename,"D")
+    if benchmark == "SinE"
+        # Scale the Xes to 0:10 in each direction
+        X = 2 .* X
+        # Scale the D matrix (X^2+Y^2)
+        D = 2*D
+    end
+
+    if benchmark == "Spiral"
+        is = 0:96
+        Phis = 1/16*pi.*is
+        rs = 6.5.*(104 .- is)/104
+        x2 = -rs.*cos.(Phis)
+        y =  append!(ones(size(x2)), -ones(size(x2)))
+    else
+        y = Benchmark_2D(X,benchmark,noiseLevel)
+    end
+    return X, y, A, D
 end
