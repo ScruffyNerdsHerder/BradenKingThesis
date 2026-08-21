@@ -3,7 +3,8 @@ using SLFA
 using Optim
 using LsqFit
 using LinearAlgebra
-export lsq_TV_solver_LBFGS, lsq_TV_solver_CG, lsq_TV_solver_GradientDescent
+
+export lsq_TV_solver_LBFGS, lsq_TV_solver_CG, lsq_TV_solver_GradientDescent, lsq_TV_solver_OmegaSweepExpDecrease, lsq_TV_solver_DynamicOmega
 
 function lsq_TV_solver_CG(omega_TV, theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction})
     res_new(theta) = res - theta[end-1] .* eval_phi(X, theta, T_phi) .- theta[end]
@@ -49,7 +50,7 @@ function lsq_TV_solver_CG(omega_TV, theta0, X, res, A, D, N, T_phi::Type{<:Basis
 end
 
 function lsq_TV_solver_LBFGS(omega_TV, theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction})
-    res_new(theta) = res - theta[end-1] .* eval_phi(X, theta, T_phi) .- theta[end]
+    res_new(theta) = res .- theta[end-1] .* eval_phi(X, theta, T_phi) .- theta[end]
 
     if omega_TV > 0.0
         f_lsq_orig = norm(res_new(theta0))
@@ -133,11 +134,11 @@ function lsq_TV_solver_GradientDescent(omega_TV, theta0, X, res, A, D, N, T_phi:
 
 end
 
-function lsq_TV_solver_OmegaSweep(omega, theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction})
+function lsq_TV_solver_OmegaSweepExpDecrease(omega_init, theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction})
     res_new(theta) = res - theta[end-1] .* eval_phi(X, theta, T_phi) .- theta[end]
 
     # Evaluate for current omega value
-    omega_TV = omega(N)
+    omega_TV = omega_init*0.999^N
 
     if omega_TV > 0.0
         f_lsq_orig = norm(res_new(theta0))
@@ -155,16 +156,16 @@ function lsq_TV_solver_OmegaSweep(omega, theta0, X, res, A, D, N, T_phi::Type{<:
         
         theta = Optim.minimizer(result)
 
-        # lsq_initial = f_lsq(theta0)
-        # lsq_final = f_lsq(theta)
-        # if lsq_final > lsq_initial
-        #     theta_lsq = lsq_solver(theta0, X, res, A, D, N, T_phi)
-        #     if squaredTV(res_new(theta_lsq), A, D) < TV_orig
-        #         return theta_lsq
-        #     else
-        #         return theta0
-        #     end
-        # end
+        lsq_initial = f_lsq(theta0)
+        lsq_final = f_lsq(theta)
+        if lsq_final > lsq_initial
+            theta_lsq = lsq_solver(theta0, X, res, A, D, N, T_phi)
+            if squaredTV(res_new(theta_lsq), A, D) < TV_orig
+                return theta_lsq
+            else
+                return theta0
+            end
+        end
 
         return theta
     else

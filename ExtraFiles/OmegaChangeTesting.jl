@@ -153,21 +153,18 @@ end
 ## Run the 2D benchmark with a exponentially decreasing omega (start at something and decay exponentially)
     X, y, A, D = benchmark_2D_data("ExtraFiles/data/uniform_1000_doublecone_30deg.jld2", "Sine", 0.0)
     # X, y, A, D = benchmark_2D_data("ExtraFiles/data/yu_spiral_doublecone_30deg.jld2", "Spiral", 0.0)
-    omegas_init = collect(range(0.0, stop=10, length=50))
-    a = 0.999
+    omegas_init = collect(range(0.0, stop=10, length=10))
     # as = collect(range(0.0, stop=0.999, length=50))
-    N_max = 200
+    N_max = 100
     monotonicity=Nonstrict()
-    finalres = zeros(length(omegas_init))
-    finaltheta = zeros(length(omegas_init),N_max,5)
+    resData = zeros(length(omegas_init),N_max+1)
+    finalTheta = zeros(length(omegas_init),N_max,5)
 
     @threads for i in eachindex(omegas_init)
         omega_init = omegas_init[i]
         # a = as[i]
-        function omega_decrease_exp_n(n) 
-            return omega_init*(a)^n
-        end
-        solver_LBFGS(theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction}) = lsq_TV_solver_OmegaSweep(omega_decrease_exp_n, theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction})
+
+        solver_LBFGS(theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction}) = lsq_TV_solver_OmegaSweepExpDecrease(omega_init, theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction})
         error_threshold = [0.0, 0.0, 0.0]
         print_iter=false
         Theta, res_history, _, _, _, _, _ = train_RBFN(
@@ -180,20 +177,36 @@ end
         get_initial_guess = max_dist_test,
         T_phi = Gaussian{Isotropic, Float64, 2}
         );
-        finalres[i] = res_history[end]
-        finaltheta[i,:,:] = Theta
+        resData[i,:] = res_history
+        finalTheta[i,:,:] = Theta
     end
+    
+    ## Create the errors vs Ns vs Omega matrices
+    Ns = collect(0:N_max)
+    ers = resData
+    scale = ReversibleScale(x -> log10(x), x -> 10.0^x)
     ## Plot the residuals vs omega
+    f = GLMakie.Figure()
+    ax = Axis(f[1,1],
+    xlabel = "N's",
+    ylabel = "Initial Omega",
+    )
+    GLMakie.heatmap!(ax,  Ns, omegas_init, ers', colormap = :jet1, colorscale = scale, colorrange = (1e-2, 1))
+    # Make the color scale correctly
+    # Make the fonts bigger for the X,Y axes
+    # MAke the filename just 1, 2, etc
+
+    f
     @save "LinearIncreasingOmegaSweep.jdl2" omegas_init finalres finaltheta
     
     @load "LinearIncreasingOmegaSweep.jdl2" omegas_init finalres
-    f = CairoMakie.Figure()
+    f = GLMakie.Figure()
     ax = Axis(f[1,1],
     yscale = log10,
     xlabel = "A-Omega",
     ylabel = "Final Residual Error",
     title = "Linearly Increasing Omega Sweep (w=w_init+w_a*n) for SineE Benchmark",
     )
-    CairoMakie.scatter!(ax,omegas_init, finalres)
+    GLMakie.scatter!(ax,omegas_init, resData[:,end])
     f
     ## 
