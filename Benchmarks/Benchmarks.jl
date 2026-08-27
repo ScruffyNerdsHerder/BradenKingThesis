@@ -26,7 +26,7 @@ function Benchmark_1D(X,benchmark,noiseLevel=0.0)
         periods = .25*(X[end]-X[1])
         y = zero(X)
         y[mod.(X,periods) .<= 1] .= 1
-    elseif benchmark == "SinE"
+    elseif benchmark == "SineE"
         y = 0.8*exp.(-0.2*X) .* sin.(10*X)
     elseif benchmark == "CompositeSine"
         funcs = 30
@@ -39,6 +39,18 @@ function Benchmark_1D(X,benchmark,noiseLevel=0.0)
             bias = rand_Params[4,i]
             y .= y .+ amplitude .* sin.(1.5 .* pi .* freq .* X .+ phase) .+ bias;
         end
+    elseif benchmark == "ZigZag"
+        # "X needs to be from 0-3"
+        y = 3 ./ 2. * (X + 1) - 0.25 * X
+    elseif benchmark == "Rhythm"
+        # "X needs to be from 0-20"
+        y = ((mod.(X,11) .- 5) ./ 8) .^ 3
+    elseif benchmark == "SinCos"
+        #  X from 0 to 2pi
+        y = X .* sin.(X) .* cos.(X)
+    elseif benchmark == "ExpSin"
+        # X from 1-3
+        y = 2 .* X .^ 2 + exp.(pi./X).* sin.(2 .* pi./X)
     else # Didnt put in a correct benchmark
         throw("Put in a correct benchmark please: AsymnmetricRBF, Sine, Step, SinE, or CompositeSine")
     end
@@ -79,8 +91,15 @@ function Benchmark_2D(X, benchmark, noiseLevel=0.0)
         y = -1 ./ 30 .* exp.(-1 .- 6 .* X1 .- 9 .* X1.^2 - 9 .* X2.^2) .+
         -(0.6 .* X1 .- 27 .* X1.^3 - 243 .* X2.^5).*exp.(-9 .* X1.^2 .- 9 .*X2.^2) .+
         (0.3 .- 1.8.*X1 .+ 2.7 .* X1.^2).*exp.(-1 .- 6 .* X2 .- 9 .* X1.^2 .- 9 .* X2 .^2)
-    elseif benchmark == "Spiral"
-
+    # elseif benchmark == "Spiral"
+    elseif benchmark == "3DMexHat"
+        y = (sin.((X1.^2 .+ X2.^2).^(1/2)) ./ (X1.^2 .+ X2.^2).^(1/2))
+    elseif benchmark == "Gabor"
+        y = pi/2 .* exp.(-2 .* (X1.^2 .+ X2.^2)) .* cos.(2 .*pi.*X1 .+ 2 .*pi.*X2)
+    elseif benchmark == "SwingCos"
+        y = X1 .+ X2 .+ cos.(2*pi.*X1) .+ cos.(2*pi.*X2)
+    elseif benchmark == "Exponential"
+        y= X1 .* exp.(-(X1.^2 .+ X2.^2))
     else # Didnt put in a correct benchmark
         throw("Put in a correct benchmark please: Sine, Step, SinE, or Peaks")
     end
@@ -94,19 +113,30 @@ function benchmark_2D_data(filename,benchmark,noiseLevel)
     X = load(filename,"X")
     A = load(filename,"A")
     D = load(filename,"D")
-    if benchmark == "SinE"
+    if benchmark == "SineE"
         # Scale the Xes to 0:10 in each direction
         X = 2 .* X
         # Scale the D matrix (X^2+Y^2)
         D = 2*D
     end
-
     if benchmark == "Spiral"
         is = 0:96
         Phis = 1/16*pi.*is
         rs = 6.5.*(104 .- is)/104
         x2 = -rs.*cos.(Phis)
         y =  append!(ones(size(x2)), -ones(size(x2)))
+    elseif benchmark == "3dMexHat"
+        X = 5 .* X
+        D = 5 .* D
+        y = Benchmark_2D(X,benchmark,noiseLevel)
+    elseif benchmark == "Gabor"
+        X = 0.5 .* X .+ 0.5
+        D = 0.5 .* D
+        y = Benchmark_2D(X,benchmark,noiseLevel)
+    elseif benchmark == "Exponential"
+        X = 2 .* X
+        D = 2 .* D
+        y = Benchmark_2D(X,benchmark,noiseLevel)
     else
         y = Benchmark_2D(X,benchmark,noiseLevel)
     end

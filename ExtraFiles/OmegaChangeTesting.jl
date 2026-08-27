@@ -155,7 +155,7 @@ end
     # X, y, A, D = benchmark_2D_data("ExtraFiles/data/yu_spiral_doublecone_30deg.jld2", "Spiral", 0.0)
     omegas_init = collect(range(0.0, stop=10, length=10))
     # as = collect(range(0.0, stop=0.999, length=50))
-    N_max = 100
+    N_max = 10
     monotonicity=Nonstrict()
     resData = zeros(length(omegas_init),N_max+1)
     finalTheta = zeros(length(omegas_init),N_max,5)
@@ -164,7 +164,7 @@ end
         omega_init = omegas_init[i]
         # a = as[i]
 
-        solver_LBFGS(theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction}) = lsq_TV_solver_OmegaSweepExpDecrease(omega_init, theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction})
+        solver_LBFGS(theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction}) = lsq_TV_solver_OmegaCSweepExpDecrease(omega_init, theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction})
         error_threshold = [0.0, 0.0, 0.0]
         print_iter=false
         Theta, res_history, _, _, _, _, _ = train_RBFN(
@@ -184,16 +184,19 @@ end
     ## Create the errors vs Ns vs Omega matrices
     Ns = collect(0:N_max)
     ers = resData
-    scale = ReversibleScale(x -> log10(x), x -> 10.0^x)
+    scale = ReversibleScale(x -> log2(x), x -> 2.0^x)
     ## Plot the residuals vs omega
     f = GLMakie.Figure()
     ax = Axis(f[1,1],
     xlabel = "N's",
+    xlabelsize = 20,
+    ylabelsize = 20,
     ylabel = "Initial Omega",
     )
-    GLMakie.heatmap!(ax,  Ns, omegas_init, ers', colormap = :jet1, colorscale = scale, colorrange = (1e-2, 1))
+    GLMakie.heatmap!(ax,  Ns, omegas_init, ers', colormap = :jet1, 
+    colorscale = scale,
+     colorrange = (1e-2, 1))
     # Make the color scale correctly
-    # Make the fonts bigger for the X,Y axes
     # MAke the filename just 1, 2, etc
 
     f
