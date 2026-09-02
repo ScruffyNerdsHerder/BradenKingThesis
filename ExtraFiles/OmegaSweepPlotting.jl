@@ -15,7 +15,7 @@ using GLMakie
 using Base.Threads
 
 ## Plot the Constant Omega 1D Sweep
-    @load "ExtraFiles/BorahExperiments/OmegaSweepResults/1D_BenchmarkConstCoarseSweep.jld2" X_1D Omega_sweep resData_1 finalTheta_1 resData_2 finalTheta_2 resData_3 finalTheta_3 resData_4 finalTheta_4 resData_5 finalTheta_5
+    @load "ExtraFiles/BorahExperiments/OmegaSweepResults/1D_BenchmarkConstFineSweep.jld2" X_1D Omega_sweep resData_1 finalTheta_1 resData_2 finalTheta_2 resData_3 finalTheta_3 resData_4 finalTheta_4 resData_5 finalTheta_5
     N_max = 250
     
     ## Plot the results of the ratio vs the residual error history
@@ -35,25 +35,22 @@ using Base.Threads
         # colorrange = (1e-3, 1))
         f
     # Find the Omega that gives the best residual for each N
-    best_omegas = zeros(5)
-    best_omega_ind = argmin(resData_1[:,end], dims = 1)
-    best_omega = Omega_sweep[best_omega_ind]
-    best_omegas[1] = only(best_omega)
-    best_omega_ind = argmin(resData_2[:,end], dims = 1)
-    best_omega = Omega_sweep[best_omega_ind]
-    best_omegas[2] = only(best_omega)
-    best_omega_ind = argmin(resData_3[:,end], dims = 1)
-    best_omega = Omega_sweep[best_omega_ind]
-    best_omegas[3] = only(best_omega)
-    best_omega_ind = argmin(resData_4[:,end], dims = 1)
-    best_omega = Omega_sweep[best_omega_ind]
-    best_omegas[4] = only(best_omega)
-    best_omega_ind = argmin(resData_5[:,end], dims = 1)
-    best_omega = Omega_sweep[best_omega_ind]
-    best_omegas[5] = only(best_omega)
-    best_omegas
+    best_omegas = [ Omega_sweep[argmin(resData_1[:,end], dims = 1)],
+                    Omega_sweep[argmin(resData_2[:,end], dims = 1)],
+                    Omega_sweep[argmin(resData_3[:,end], dims = 1)],
+                    Omega_sweep[argmin(resData_4[:,end], dims = 1)],
+                    Omega_sweep[argmin(resData_5[:,end], dims = 1)] ]
+    best_res = [resData_1[argmin(resData_1[:,end], dims = 1),end],
+        resData_2[argmin(resData_2[:,end], dims = 1),end],
+        resData_3[argmin(resData_3[:,end], dims = 1),end],
+        resData_4[argmin(resData_4[:,end], dims = 1),end],
+            resData_5[argmin(resData_5[:,end], dims = 1),end]]
+    w0_res = [resData_1[1,end],
+        resData_2[1,end],
+        resData_3[1,end],
+        resData_4[1,end],
+            resData_5[1,end]]
 ## Plot the Constant Omega 2d Sweep
-
  @load "ExtraFiles/BorahData/OmegaSweepResults/2D_BenchmarkConstCoarseSweep.jld2" X_2D Omega_sweep resData_2_1 finalTheta_2_1 resData_2_2 finalTheta_2_2 resData_2_3 finalTheta_2_3 resData_2_4 finalTheta_2_4 resData_2_5 finalTheta_2_5 resData_2_6 finalTheta_2_6 
  N_max = 500
  
@@ -73,7 +70,194 @@ using Base.Threads
     colorscale = scale,
      colorrange = (1e-4, 1))
      f
+## Explore the Linear Increasing Omega 1D Sweep
+ @load "ExtraFiles/BorahExperiments/OmegaSweepResults/1D_BenchmarkLinearIncreaseSweep.jld2" X_1D OmegaFinal_sweep resData_1 finalTheta_1 resData_2 finalTheta_2 resData_3 finalTheta_3 resData_4 finalTheta_4 resData_5 finalTheta_5
+ N_max = 250
+ 
+ ## Plot the results of the ratio vs the residual error history
+    Ns = collect(0:N_max)
+    ers = resData_5
+    scale = ReversibleScale(x -> log2(x), x -> 2.0^x)
+    ## Plot the residuals vs omega
+    f = GLMakie.Figure()
+    ax = Axis(f[1,1],
+    xlabel = "N's",
+    xlabelsize = 20,
+    ylabelsize = 20,
+    ylabel = "Final Value of Omega",
+    )
+    GLMakie.heatmap!(ax,  Ns, OmegaFinal_sweep, ers', colormap = :jet1, 
+    colorscale = scale)
+    #  colorrange = (1e-4, 1))
+     f
+    # Find the Omega that gives the best residual for each N
 
+    best_omegas = [ OmegaFinal_sweep[argmin(resData_1[:,end], dims = 1)],
+                    OmegaFinal_sweep[argmin(resData_2[:,end], dims = 1)],
+                    OmegaFinal_sweep[argmin(resData_3[:,end], dims = 1)],
+                    OmegaFinal_sweep[argmin(resData_4[:,end], dims = 1)],
+                    OmegaFinal_sweep[argmin(resData_5[:,end], dims = 1)] ]
+    best_res = [resData_1[argmin(resData_1[:,end], dims = 1),end],
+        resData_2[argmin(resData_2[:,end], dims = 1),end],
+        resData_3[argmin(resData_3[:,end], dims = 1),end],
+        resData_4[argmin(resData_4[:,end], dims = 1),end],
+            resData_5[argmin(resData_5[:,end], dims = 1),end]]
+    w0_res = [resData_1[1,end],
+        resData_2[1,end],
+        resData_3[1,end],
+        resData_4[1,end],
+            resData_5[1,end]]
+            
+## Explore the Linear Decreasing Omega 1D Slope Sweep
+ @load "ExtraFiles/BorahExperiments/OmegaSweepResults/1D_BenchmarkLinearDecreaseSlopeSweep.jld2" X_1D Slope_sweep resData_1 finalTheta_1 resData_2 finalTheta_2 resData_3 finalTheta_3 resData_4 finalTheta_4 resData_5 finalTheta_5
+ N_max = 250
+ 
+ ## Plot the results of the ratio vs the residual error history
+    Ns = collect(0:N_max)
+    ers = resData_5
+    scale = ReversibleScale(x -> log2(x), x -> 2.0^x)
+    ## Plot the residuals vs omega
+    f = GLMakie.Figure()
+    ax = Axis(f[1,1],
+    xlabel = "N's",
+    xlabelsize = 20,
+    ylabelsize = 20,
+    ylabel = "Slope of Linear Decreasing Omega",
+    )
+    GLMakie.heatmap!(ax,  Ns, Slope_sweep, ers', colormap = :jet1, 
+    colorscale = scale)
+    #  colorrange = (1e-4, 1))
+     f
+    # Find the Omega that gives the best residual for each N
+
+    best_omegas = [ Slope_sweep[argmin(resData_1[:,end], dims = 1)],
+                    Slope_sweep[argmin(resData_2[:,end], dims = 1)],
+                    Slope_sweep[argmin(resData_3[:,end], dims = 1)],
+                    Slope_sweep[argmin(resData_4[:,end], dims = 1)],
+                    Slope_sweep[argmin(resData_5[:,end], dims = 1)] ]
+    best_res = [resData_1[argmin(resData_1[:,end], dims = 1),end],
+        resData_2[argmin(resData_2[:,end], dims = 1),end],
+        resData_3[argmin(resData_3[:,end], dims = 1),end],
+        resData_4[argmin(resData_4[:,end], dims = 1),end],
+            resData_5[argmin(resData_5[:,end], dims = 1),end]]
+    w0_res = [resData_1[1,end],
+        resData_2[1,end],
+        resData_3[1,end],
+        resData_4[1,end],
+            resData_5[1,end]]
+            
+## Explore the Linear Decreasing Omega 1D Omega_init Sweep
+     @load "ExtraFiles/BorahExperiments/OmegaSweepResults/1D_BenchmarkLinearDecreaseInitSweep.jld2" X_1D Init_sweep resData_1 finalTheta_1 resData_2 finalTheta_2 resData_3 finalTheta_3 resData_4 finalTheta_4 resData_5 finalTheta_5
+    N_max = 250
+ 
+    ## Plot the results of the ratio vs the residual error history
+    Ns = collect(0:N_max)
+    ers = resData_5
+    scale = ReversibleScale(x -> log2(x), x -> 2.0^x)
+    ## Plot the residuals vs omega
+    f = GLMakie.Figure()
+    ax = Axis(f[1,1],
+    xlabel = "N's",
+    xlabelsize = 20,
+    ylabelsize = 20,
+    ylabel = "Slope of Linear Decreasing Omega",
+    )
+    GLMakie.heatmap!(ax,  Ns, Init_sweep, ers', colormap = :jet1, 
+    colorscale = scale)
+    #  colorrange = (1e-4, 1))
+     f
+    # Find the Omega that gives the best residual for each N
+
+    best_omegas = [ Init_sweep[argmin(resData_1[:,end], dims = 1)],
+                    Init_sweep[argmin(resData_2[:,end], dims = 1)],
+                    Init_sweep[argmin(resData_3[:,end], dims = 1)],
+                    Init_sweep[argmin(resData_4[:,end], dims = 1)],
+                    Init_sweep[argmin(resData_5[:,end], dims = 1)] ]
+    best_res = [resData_1[argmin(resData_1[:,end], dims = 1),end],
+        resData_2[argmin(resData_2[:,end], dims = 1),end],
+        resData_3[argmin(resData_3[:,end], dims = 1),end],
+        resData_4[argmin(resData_4[:,end], dims = 1),end],
+        resData_5[argmin(resData_5[:,end], dims = 1),end]]
+    w0_res = [resData_1[1,end],
+        resData_2[1,end],
+        resData_3[1,end],
+        resData_4[1,end],
+        resData_5[1,end]]
+## Explore the Exponential Decreasing Omega 1D C Sweep
+ @load "ExtraFiles/BorahExperiments/OmegaSweepResults/1D_BenchmarkExpCSweep.jld2" X_1D C_sweep resData_1 finalTheta_1 resData_2 finalTheta_2 resData_3 finalTheta_3 resData_4 finalTheta_4 resData_5 finalTheta_5
+ N_max = 250
+ 
+ ## Plot the results of the ratio vs the residual error history
+    Ns = collect(0:N_max)
+    ers = resData_5
+    scale = ReversibleScale(x -> log2(x), x -> 2.0^x)
+    ## Plot the residuals vs omega
+    f = GLMakie.Figure()
+    ax = Axis(f[1,1],
+    xlabel = "N's",
+    xlabelsize = 20,
+    ylabelsize = 20,
+    ylabel = "Final Value of Omega",
+    )
+    GLMakie.heatmap!(ax,  Ns, C_sweep, ers', colormap = :jet1, 
+    colorscale = scale)
+    #  colorrange = (1e-4, 1))
+     f
+    # Find the Omega that gives the best residual for each N
+
+    best_omegas = [ C_sweep[argmin(resData_1[:,end], dims = 1)],
+                    C_sweep[argmin(resData_2[:,end], dims = 1)],
+                    C_sweep[argmin(resData_3[:,end], dims = 1)],
+                    C_sweep[argmin(resData_4[:,end], dims = 1)],
+                    C_sweep[argmin(resData_5[:,end], dims = 1)] ]
+    best_res = [resData_1[argmin(resData_1[:,end], dims = 1),end],
+        resData_2[argmin(resData_2[:,end], dims = 1),end],
+        resData_3[argmin(resData_3[:,end], dims = 1),end],
+        resData_4[argmin(resData_4[:,end], dims = 1),end],
+            resData_5[argmin(resData_5[:,end], dims = 1),end]]
+    w0_res = [resData_1[1,end],
+        resData_2[1,end],
+        resData_3[1,end],
+        resData_4[1,end],
+            resData_5[1,end]]
+            
+## Explore the Exponential Decreasing Omega 1D N0 Sweep
+ @load "ExtraFiles/BorahExperiments/OmegaSweepResults/1D_BenchmarkExpN0Sweep.jld2" X_1D N0_sweep resData_1 finalTheta_1 resData_2 finalTheta_2 resData_3 finalTheta_3 resData_4 finalTheta_4 resData_5 finalTheta_5
+ N_max = 250
+ 
+ ## Plot the results of the ratio vs the residual error history
+    Ns = collect(0:N_max)
+    ers = resData_5
+    scale = ReversibleScale(x -> log2(x), x -> 2.0^x)
+    ## Plot the residuals vs omega
+    f = GLMakie.Figure()
+    ax = Axis(f[1,1],
+    xlabel = "N's",
+    xlabelsize = 20,
+    ylabelsize = 20,
+    ylabel = "Final Value of Omega",
+    )
+    GLMakie.heatmap!(ax,  Ns, N0_sweep, ers', colormap = :jet1, 
+    colorscale = scale)
+    #  colorrange = (1e-4, 1))
+     f
+    # Find the Omega that gives the best residual for each N
+
+    best_omegas = [ N0_sweep[argmin(resData_1[:,end], dims = 1)],
+                    N0_sweep[argmin(resData_2[:,end], dims = 1)],
+                    N0_sweep[argmin(resData_3[:,end], dims = 1)],
+                    N0_sweep[argmin(resData_4[:,end], dims = 1)],
+                    N0_sweep[argmin(resData_5[:,end], dims = 1)] ]
+    best_res = [resData_1[argmin(resData_1[:,end], dims = 1),end],
+        resData_2[argmin(resData_2[:,end], dims = 1),end],
+        resData_3[argmin(resData_3[:,end], dims = 1),end],
+        resData_4[argmin(resData_4[:,end], dims = 1),end],
+            resData_5[argmin(resData_5[:,end], dims = 1),end]]
+    w0_res = [resData_1[1,end],
+        resData_2[1,end],
+        resData_3[1,end],
+        resData_4[1,end],
+            resData_5[1,end]]
 ## Plot and load the results of the dynamic omega ratio sweep for the 2D benchmarks
     @load "ExtraFiles/BorahData/DynamicOmegaRatios_2D.jld2" X ratios omega_TV resData_2_2_1 finalTheta_2_2_1 resData_2_2_2 finalTheta_2_2_2 resData_2_2_3 finalTheta_2_2_3 resData_2_2_4 finalTheta_2_2_4 resData_2_2_5 finalTheta_2_2_5 resData_2_2_6 finalTheta_2_2_6
     N_max = 500
@@ -160,7 +344,6 @@ using Base.Threads
      f
 
 ## Plot the Initial Value For linear decreas omega Sweep slope - 1/500 cutoff Omega >.001
-
  @load "ExtraFiles/BorahData/OmegaInitialSweep_1D.jld2" X_1D Omega_sweep resData_1 finalTheta_1 resData_2 finalTheta_2 resData_3 finalTheta_3 resData_4 finalTheta_4 resData_5 finalTheta_5
  N_max = 250
  
