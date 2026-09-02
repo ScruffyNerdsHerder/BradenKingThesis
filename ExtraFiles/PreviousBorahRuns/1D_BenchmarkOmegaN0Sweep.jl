@@ -18,7 +18,7 @@ y_SineE = Benchmark_1D(X_1D, "SineE", 0.0)
 y_CompositeSine = Benchmark_1D(X_1D, "CompositeSine", 0.0)
 
 ## Run the C omega sweep on each 1D benchmark and save the results
-N0_Sweep = [0:0.01:10...]
+N0_Sweep = [0:1:100...]
 N_max = 250
 monotonicity = Nonstrict()
 
