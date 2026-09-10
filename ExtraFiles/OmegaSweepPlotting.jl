@@ -50,7 +50,6 @@ using Base.Threads
         resData_3[1,end],
         resData_4[1,end],
             resData_5[1,end]]
-
             
 ## Plot the Constant Omega 2d Sweep
  @load "ExtraFiles/BorahExperiments/OmegaSweepResults/2D_BenchmarkConstFineSweep.jld2" X_2D Omega_sweep resData_2_1 finalTheta_2_1 resData_2_2 finalTheta_2_2 resData_2_3 finalTheta_2_3 resData_2_4 finalTheta_2_4 resData_2_5 finalTheta_2_5 resData_2_6 finalTheta_2_6 
