@@ -61,7 +61,7 @@ Grid_sweep = [(N0, C) for N0 in N0_Range for C in C_Range]
 
 ## Generate benchmark data with no noise (Local version)
 X_Sine, y_Sine, A_Sine, D_Sine = benchmark_2D_data("ExtraFiles/data/normal_1000_doublecone_30deg.jld2", "Sine", 0.0)
-X_SineE, y_SineE, A_SineE, D_SineE = benchmark_2D_data("ExtraFiles/data/normal_1000_doublecone_30deg.jld2", "SineE", 0.0)
+# X_SineE, y_SineE, A_SineE, D_SineE = benchmark_2D_data("ExtraFiles/data/normal_1000_doublecone_30deg.jld2", "SineE", 0.0)
 X_Step, y_Step, A_Step, D_Step = benchmark_2D_data("ExtraFiles/data/normal_1000_doublecone_30deg.jld2", "Step", 0.0)
 ## Run the Coarse Omega Constant sweep on each 2D benchmark and save the results
 N_max = 5
@@ -74,21 +74,18 @@ finalTheta_2_2 = zeros(length(N0_Range)*length(C_Range),N_max,5)
 resData_2_4 = zeros(length(N0_Range)*length(C_Range),N_max+1)
 finalTheta_2_4 = zeros(length(N0_Range)*length(C_Range),N_max,5)
 params_solver = [0.0, 0.0]
-@threads for i in eachindex(N0_Range)
+@threads :static for i in eachindex(N0_Range)
     N0 = N0_Range[i]
     # Loop over the C values for each N0 value
     for j in eachindex(C_Range)
         index = (i-1)*length(C_Range) + j
         C = C_Range[j]
-        print("Running N0 = $N0, C = $(C) for index $index")
         # Define the solver function for the current N0 and C values
-        params_solver[1] = N0
-        params_solver[2] = C
-        solver_N0Sweep(theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction}) = lsq_TV_solver_Omega2DSweepExpDecrease(params_solver, theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction})
+        solver_N0Sweep(theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction}) = lsq_TV_solver_Omega2DSweepExpDecrease((N0,C), theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction})
         error_threshold = [0.0, 0.0, 0.0]
         print_iter=false
         # Run the N0 sweep on the Sine 2D benchmark
-            Theta_1, res_history_1, _, _, _, _, _ = train_RBFN(
+            FinalTheta_2_1[index,:,:], resData_2_1[index,:] , _, _, _, _, _ = train_RBFN(
             X_Sine, y_Sine, A_Sine, D_Sine,
             N_max=N_max,
             solver=solver_N0Sweep,
@@ -98,10 +95,8 @@ params_solver = [0.0, 0.0]
             get_initial_guess = max_dist_test,
             T_phi = Gaussian{Isotropic, Float64, 2}
             );
-            resData_2_1[index,:] = res_history_1
-            finalTheta_2_1[index,:,:] = Theta_1
         # Run the N0 sweep on the SineE benchmark
-            Theta_1, res_history_1, _, _, _, _, _ = train_RBFN(
+            finalTheta_2_2[index,:,:], resData_2_2[index,:], _, _, _, _, _ = train_RBFN(
             X_SineE, y_SineE, A_SineE, D_SineE,
             N_max=N_max,
             solver=solver_N0Sweep,
@@ -111,10 +106,8 @@ params_solver = [0.0, 0.0]
             get_initial_guess = max_dist_test,
             T_phi = Gaussian{Isotropic, Float64, 2}
             );
-            resData_2_2[index,:] = res_history_1
-            finalTheta_2_2[index,:,:] = Theta_1
         # Run the N0 sweep on the Step benchmark
-            Theta_1, res_history_1, _, _, _, _, _ = train_RBFN(
+            finalTheta_2_4[index,:,:], resData_2_4[index,:], _, _, _, _, _ = train_RBFN(
             X_Step, y_Step, A_Step, D_Step,
             N_max=N_max,
             solver=solver_N0Sweep,
@@ -124,12 +117,10 @@ params_solver = [0.0, 0.0]
             get_initial_guess = max_dist_test,
             T_phi = Gaussian{Isotropic, Float64, 2}
             );
-            resData_2_4[index,:] = res_history_1
-            finalTheta_2_4[index,:,:] = Theta_1
     end
 end
 
 X_2D = X_Sine
-@save "2D_BenchmarkExp2DSweep"*string(ARGS[1])*"_"*string(ARGS[3])*".jld2" X_2D Grid_sweep resData_2_1 finalTheta_2_1 resData_2_2 finalTheta_2_2 resData_2_4 finalTheta_2_4
+@save "2D_BenchmarkExp2DSweepCheck2b3"*string(ARGS[1])*"_"*string(ARGS[3])*".jld2" X_2D Grid_sweep resData_2_1 finalTheta_2_1 resData_2_2 finalTheta_2_2 resData_2_4 finalTheta_2_4
 # @save "2D_BenchmarkExp2DSweep.jld2" X_2D Grid_sweep resData_2_1 finalTheta_2_1 resData_2_2 finalTheta_2_2 resData_2_4 finalTheta_2_4
 end
