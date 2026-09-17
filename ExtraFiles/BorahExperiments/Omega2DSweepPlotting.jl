@@ -13,6 +13,7 @@ using Measures
 using JLD2
 using PrettyTables
 using GLMakie
+using CairoMakie
 using Base.Threads
 using Printf
 using Statistics
@@ -99,18 +100,43 @@ function SweepPlot2DGIF(Results_Store, N0_Range, C_Range, benchmark_name::String
 end
 ## Build a grid storing C and N0 values to plot
     N0_Range = collect(10:50:1010)
-    C_Range = collect(0.0:0.1:10)
+    C_Range = collect(0.0:0.1:15)
 
     C_Store = repeat(C_Range, 1, length(N0_Range))
     N0_Store = repeat(N0_Range, 1, length(C_Range))
     N0_Store_Flip = N0_Store'
     RangeGrid = (collect(N0_Store),collect(C_Store'))
 
-    Results_Store = zeros(length(N0_Range),length(C_Range), 6, 3)
+    Results_Store = zeros(length(N0_Range),length(C_Range), 501, 3)
 
 
 ## Pull data from a previously run Borah experiment and store results into correct location in 2D Sweep matrix
-    @load "ExtraFiles/BorahExperiments/OmegaSweepResults/2D_BenchmarkExp2DSweep10_0.jld2" Grid_sweep resData_2_1 finalTheta_2_1 resData_2_2 finalTheta_2_2 resData_2_4 finalTheta_2_4
+
+    @load "ExtraFiles/BorahExperiments/OmegaSweepResults/1D_BenchmarkConstCoarseSweep.jld2" Grid_sweep resData_1 finalTheta_1 
+# Evaluate the RMSE for each theta as the network builds, since resData is bounddiff
+T_phi = Gaussian{Isotropic,Float64,2}
+getError(X_Sine, y_Sine, finalTheta_2_1, errFunc, T_phi)
+
+
+function getError(X,y,thetas,errFunc,T_phi)
+    experiments = size(thetas,1)
+    N_max = size(thetas,2)
+    result = zeros(experiments,N_max+1)
+    result[:,1] .= errFunc(y)
+    for i = 1:3
+        # iterate over N building
+        res = copy(y)
+        for N = 1:N_max
+            res = res .- thetas[i,N,end-1] .* eval_phi(X,thetas[i,N,:],T_phi) .- thetas[i,N,end]
+            result[i,N+1] = errFunc(res) 
+        end
+    end
+    return result
+end
+
+function errFunc(y)
+    return SLFA.RMSE(y)
+end
 
     for i in eachindex(Grid_sweep)
         println("Storing results for index $i of $(length(Grid_sweep))")
@@ -127,9 +153,9 @@ end
 
 ## Pull the data from the 2D sweep results and plot the residuals for pair of C and N0 values
 @load "ExtraFiles/BorahExperiments/OmegaSweepResults/2D_Benchmark2DSweepResults.jld2" Results_Store
-    benchmark_name = "SineE"
-    N0_Range = collect(10:50:960)
-    C_Range = collect(0.0:0.1:9.9)
-    N_array = collect(0:50:500)
+    benchmark_name = "Step"
+    N0_Range = collect(10:50:1010)
+    C_Range = collect(0.0:0.1:15.0)
+    N_array = collect(0:1:500)
     SweepPlot2DGIF(Results_Store, N0_Range, C_Range, benchmark_name, N_array)
     SweepPlot2D(Results_Store, N0_Range, C_Range, "Sine", 10)

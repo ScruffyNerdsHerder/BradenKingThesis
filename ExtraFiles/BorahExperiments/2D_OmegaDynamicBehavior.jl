@@ -12,7 +12,7 @@ using Optim
 using Measures
 using JLD2
 using PrettyTables
-using CairoMakie
+using GLMakie
 using CSV
 using DataFrames
 
@@ -50,4 +50,13 @@ GLMakie.scatter!(ax2, bestResHistory2,omegas)
 ax3 = Axis(f[1,3], xlabel = "L2 error", ylabel = "Omega", yscale = log10, xscale = log10, title="Step")
 GLMakie.scatter!(ax3, bestResHistory3,omegas)
 
+# ax1 = Axis(f[1,1], xlabel = "L2 error", ylabel = "Omega", title = "Sine")
+# GLMakie.scatter!(ax1, bestResHistory1,omegas)
+# ax2 = Axis(f[1,2], xlabel = "L2 error", ylabel = "Omega", title="SineE")
+# GLMakie.scatter!(ax2, bestResHistory2,omegas)
+# ax3 = Axis(f[1,3], xlabel = "L2 error", ylabel = "Omega", title="Step")
+# GLMakie.scatter!(ax3, bestResHistory3,omegas)
+
 f
+
+## Calculate L-inf norm for the RBFN as it builds
