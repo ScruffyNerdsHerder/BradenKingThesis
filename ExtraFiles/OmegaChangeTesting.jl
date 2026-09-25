@@ -66,7 +66,6 @@ end
     monotonicity=Nonstrict()
     finalres = zeros(length(omegas_init))
     finaltheta = zeros(length(omegas_init),N_max,5)
-
     @threads for i in eachindex(omegas_init)
         omega_init = omegas_init[i]
         omega_a = omegas_init[i]/N_max
@@ -76,7 +75,6 @@ end
         solver_LBFGS(theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction}) = lsq_TV_solver_OmegaSweep(omega_decrease_n, theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction})
         error_threshold = [0.0, 0.0, 0.0]
         print_iter=false
-
         Theta, res_history, _, _, _, _, _ = train_RBFN(
         X, y, A, D,
         N_max=N_max,

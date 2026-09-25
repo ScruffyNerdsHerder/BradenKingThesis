@@ -23,8 +23,8 @@ error_threshold = [0.0, 0.0, 0.0]
 print_iter=false
 noiseLevel = 0.05
 monotonicity=Nonstrict()
-y_clean = Benchmark_1D(X,"SinE",0.0)
-y_noisy = Benchmark_1D(X,"SinE",noiseLevel)
+y_clean = Benchmark_1D(X,"Sine",0.0)
+y_noisy = Benchmark_1D(X,"Sine",noiseLevel)
 start_gap = noiseLevel/2*maximum(abs.(y_clean)) # start gap for the monotonicity constraint
 solver_LBFGS(theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction}) = lsq_TV_solver_LBFGS(omega, theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction})
 Theta_YuComp, res_history_YuComp, _, _, _, _, _, _, _ = train_RBFN(X, y, N_max=200, solver=solver_LBFGS, conv_conditions=res_error, conv_thresholds=error_threshold, print_iter=print_iter, is_monotonic=monotonicity);

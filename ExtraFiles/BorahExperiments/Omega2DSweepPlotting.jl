@@ -21,6 +21,7 @@ using Statistics
 BLAS.set_num_threads(2)
 println("Running with $(Threads.nthreads()) Julia threads.")
 println("Each thread uses $(BLAS.get_num_threads()) BLAS threads.")
+# SweepPlot2D(
 ## Function to do the single value plotting
 function SweepPlot2D(Results_Store, N0_Range, C_Range, benchmark_name::String, N::Int)
     if benchmark_name == "SineE"
@@ -88,7 +89,7 @@ function SweepPlot2DGIF(Results_Store, N0_Range, C_Range, benchmark_name::String
     colorscale = scale,
     colorrange = colorrange
     )
-    CairoMakie.Colorbar(f[:, 2], limits = (minval, maxval), scale = scale, labelsize = 20, width = 30, colormap = :jet1, ticks = (tickVals, tickLabels))
+    # CairoMakie.Colorbar(f[:, 2], limits = (minval, maxval), scale = scale, labelsize = 20, width = 30, colormap = :jet1, ticks = (tickVals, tickLabels))
     record(f, "ExtraFiles/BorahExperiments/OmegaSweepResults/2D_Benchmark2DSweepResults_"*string(N_array[1]+1)*"_"*string(benchmark_name)*".gif", N_array; framerate = 5) do i
         ax.title = "2D Sweep of C and N0 for "*benchmark_name*" Benchmark for N=$(i)"
         CairoMakie.update!(hm, N0_Range, C_Range, Results_Store[1:(length(N0_Range)),1:(length(C_Range)), i+1, datanum],
@@ -99,44 +100,25 @@ function SweepPlot2DGIF(Results_Store, N0_Range, C_Range, benchmark_name::String
     end
 end
 ## Build a grid storing C and N0 values to plot
-    N0_Range = collect(10:50:1010)
-    C_Range = collect(0.0:0.1:15)
+    N0_Range = collect(0:1:2)
+    C_Range = collect(10:2:100)
 
     C_Store = repeat(C_Range, 1, length(N0_Range))
     N0_Store = repeat(N0_Range, 1, length(C_Range))
     N0_Store_Flip = N0_Store'
     RangeGrid = (collect(N0_Store),collect(C_Store'))
 
-    Results_Store = zeros(length(N0_Range),length(C_Range), 501, 3)
+    Results_Store = zeros(length(N0_Range),length(C_Range), 501, 4)
 
 
 ## Pull data from a previously run Borah experiment and store results into correct location in 2D Sweep matrix
 
-    @load "ExtraFiles/BorahExperiments/OmegaSweepResults/1D_BenchmarkConstCoarseSweep.jld2" Grid_sweep resData_1 finalTheta_1 
+    @load "ExtraFiles/BorahExperiments/OmegaSweepResults/2D_BenchmarkExp2DAnisoSweep0_1_2_10_2_100.jld2" Grid_sweep resData_2_1 finalTheta_2_1 resData_2_2 finalTheta_2_2 resData_2_3 finalTheta_2_3 resData_2_4 finalTheta_2_4
 # Evaluate the RMSE for each theta as the network builds, since resData is bounddiff
-T_phi = Gaussian{Isotropic,Float64,2}
-getError(X_Sine, y_Sine, finalTheta_2_1, errFunc, T_phi)
+# T_phi = Gaussian{Isotropic,Float64,2}
+# getError(X_Sine, y_Sine, finalTheta_2_1, errFunc, T_phi)
 
-
-function getError(X,y,thetas,errFunc,T_phi)
-    experiments = size(thetas,1)
-    N_max = size(thetas,2)
-    result = zeros(experiments,N_max+1)
-    result[:,1] .= errFunc(y)
-    for i = 1:3
-        # iterate over N building
-        res = copy(y)
-        for N = 1:N_max
-            res = res .- thetas[i,N,end-1] .* eval_phi(X,thetas[i,N,:],T_phi) .- thetas[i,N,end]
-            result[i,N+1] = errFunc(res) 
-        end
-    end
-    return result
-end
-
-function errFunc(y)
-    return SLFA.RMSE(y)
-end
+# errormeas(res, res_validation, res_history, N) = SLFA.RMSE(res)
 
     for i in eachindex(Grid_sweep)
         println("Storing results for index $i of $(length(Grid_sweep))")
@@ -146,10 +128,11 @@ end
         C_index = findfirst(isequal(C), C_Range)
         Results_Store[N0_index, C_index, :, 1] = resData_2_1[i, :]
         Results_Store[N0_index, C_index, :, 2] = resData_2_2[i, :]
+        Results_Store[N0_index, C_index, :, 2] = resData_2_3[i, :]
         Results_Store[N0_index, C_index, :, 3] = resData_2_4[i, :]
     end
 
-    @save "ExtraFiles/BorahExperiments/OmegaSweepResults/2D_Benchmark2DSweepResults.jld2" RangeGrid Results_Store
+    @save "ExtraFiles/BorahExperiments/OmegaSweepResults/2D_Benchmark2DZoomedSweepResults.jld2" RangeGrid Results_Store
 
 ## Pull the data from the 2D sweep results and plot the residuals for pair of C and N0 values
 @load "ExtraFiles/BorahExperiments/OmegaSweepResults/2D_Benchmark2DSweepResults.jld2" Results_Store
@@ -158,4 +141,38 @@ end
     C_Range = collect(0.0:0.1:15.0)
     N_array = collect(0:1:500)
     SweepPlot2DGIF(Results_Store, N0_Range, C_Range, benchmark_name, N_array)
-    SweepPlot2D(Results_Store, N0_Range, C_Range, "Sine", 10)
+    SweepPlot2D(Results_Store, N0_Range, C_Range, "Sine", 500)
+
+## Misc functions
+    function getErrorSingle(X,y,thetas,errFunc,T_phi)
+        N_max = size(thetas,1)
+        result = zeros(N_max+1)
+        result[1] = errFunc(y)
+            # iterate over N building
+            res = copy(y)
+            for N = 1:N_max
+                res = res .- thetas[N,end-1] .* eval_phi(X,thetas[N,:],T_phi) .- thetas[N,end]
+                result[N+1] = errFunc(res) 
+            end
+        return result
+    end
+
+    function getErrorBatch(X,y,thetas,errFunc,T_phi)
+        experiments = size(thetas,1)
+        N_max = size(thetas,2)
+        result = zeros(experiments,N_max+1)
+        result[:,1] .= errFunc(y)
+        for i = 1:3
+            # iterate over N building
+            res = copy(y)
+            for N = 1:N_max
+                res = res .- thetas[i,N,end-1] .* eval_phi(X,thetas[i,N,:],T_phi) .- thetas[i,N,end]
+                result[i,N+1] = errFunc(res) 
+            end
+        end
+        return result
+    end
+
+    function errFunc(y)
+        return SLFA.RMSE(y)
+    end
