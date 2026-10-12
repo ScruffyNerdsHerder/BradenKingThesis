@@ -9,7 +9,7 @@ using Optim
 using JLD2
 using Base.Threads
 
-BLAS.set_num_threads(4)
+BLAS.set_num_threads(24)
 println("Running with $(Threads.nthreads()) Julia threads.")
 println("Each thread uses $(BLAS.get_num_threads()) BLAS threads.")
 
@@ -40,17 +40,53 @@ function max_dist_test_Aniso(X, res, A, D, i_extrema, support_set, I_terminal, e
     return [c0; w0; a0; b0]
 end
 # @load "ExtraFiles/RepositoryBenchmarkData/Pitch_Data.jdl2" X_Pitch y_Pitch A_Pitch D_Pitch
-@load "obs_dewpoint_c_graphs.jld2" X_dewpoint y_dewpoint A_dewpoint D_dewpoint
+
+@load "obs_temp_c_graphs.jld2" X_temp y_temp A_temp D_temp
 N0 = 5
-C = 0
-N_max = 5
+C = 20
+N_max = 150
 monotonicity = Nonstrict()
 rmse_error(res, res_validation, res_history, N) = RMSE(res);
-start_gap = 0.001*maximum(y_dewpoint)
+start_gap = 0.001*maximum(y_temp)
+print_iter=false
 solver_dewpoint(theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction}) = lsq_TV_solver_Omega2DSweepExpDecrease((N0,C), theta0, X, res, A, D, N, T_phi::Type{<:BasisFunction})
 error_threshold = [0.0, 0.0, 0.0]
-print_iter=false
+
+# Run the a single test on the Temperature benchmark
+        FinalTheta_temp, resData_temp, _, _, _, _, _ = train_RBFN(
+        X_temp, y_temp, A_temp, D_temp,
+        N_max=N_max,
+        solver=solver_dewpoint,
+            conv_conditions=rmse_error,
+        print_iter=print_iter,
+        is_monotonic=monotonicity,
+        get_initial_guess = max_dist_test_Aniso,
+        redistribute_wts_final=false,   
+        T_phi = Gaussian{Anisotropic{Aligned}, Float64, 17},
+        # start_gap = start_gap
+        );
+
+@save "PitchTesttemp0.jld2" X_temp y_temp FinalTheta_temp resData_temp
+
+# Run the a single test on the Pressure benchmark
+@load "obs_station_pressure_pa_graphs.jld2" X_pressure y_pressure A_pressure D_pressure
+        FinalTheta_pressure, resData_pressure, _, _, _, _, _ = train_RBFN(
+        X_pressure, y_pressure, A_pressure, D_pressure,
+        N_max=N_max,
+        solver=solver_dewpoint,
+            conv_conditions=rmse_error,
+        print_iter=print_iter,
+        is_monotonic=monotonicity,
+        get_initial_guess = max_dist_test_Aniso,
+        redistribute_wts_final=false,   
+        T_phi = Gaussian{Anisotropic{Aligned}, Float64, 17},
+        # start_gap = start_gap
+        );
+
+@save "PitchTestPressure0.jld2" X_pressure y_pressure FinalTheta_pressure resData_pressure
+
 # Run the a single test on the Dewpoint benchmark
+@load "obs_dewpoint_c_graphs.jld2" X_dewpoint y_dewpoint A_dewpoint D_dewpoint
         FinalTheta_dewpoint, resData_dewpoint, _, _, _, _, _ = train_RBFN(
         X_dewpoint, y_dewpoint, A_dewpoint, D_dewpoint,
         N_max=N_max,
@@ -64,6 +100,38 @@ print_iter=false
         # start_gap = start_gap
         );
 
-@save "PitchTestDewpoint.jld2" X_dewpoint y_dewpoint FinalTheta_dewpoint resData_dewpoint
+@save "PitchTestDewpoint0.jld2" X_dewpoint y_dewpoint FinalTheta_dewpoint resData_dewpoint
 
-# end
+# Run the a single test on the Precip benchmark
+@load "obs_precip_mm_graphs.jld2" X_precip y_precip A_precip D_precip
+        FinalTheta_precip, resData_precip, _, _, _, _, _ = train_RBFN(
+        X_precip, y_precip, A_precip, D_precip,
+        N_max=N_max,
+        solver=solver_dewpoint,
+            conv_conditions=rmse_error,
+        print_iter=print_iter,
+        is_monotonic=monotonicity,
+        get_initial_guess = max_dist_test_Aniso,
+        redistribute_wts_final=false,   
+        T_phi = Gaussian{Anisotropic{Aligned}, Float64, 17},
+        # start_gap = start_gap
+        );
+
+@save "PitchTestPrecip0.jld2" X_precip y_precip FinalTheta_precip resData_precip
+
+# Run the a single test on the RH benchmark
+@load "obs_precip_mm_graphs.jld2" X_precip y_precip A_precip D_precip
+        FinalTheta_precip, resData_precip, _, _, _, _, _ = train_RBFN(
+        X_precip, y_precip, A_precip, D_precip,
+        N_max=N_max,
+        solver=solver_dewpoint,
+            conv_conditions=rmse_error,
+        print_iter=print_iter,
+        is_monotonic=monotonicity,
+        get_initial_guess = max_dist_test_Aniso,
+        redistribute_wts_final=false,   
+        T_phi = Gaussian{Anisotropic{Aligned}, Float64, 17},
+        # start_gap = start_gap
+        );
+
+@save "PitchTestPrecip0.jld2" X_precip y_precip FinalTheta_precip resData_precip
